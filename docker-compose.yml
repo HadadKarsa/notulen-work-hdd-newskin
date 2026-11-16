@@ -1,0 +1,33 @@
+# Reference deployment for prod (becik). Not used on the dev machine.
+# The image is built and pushed by .github/workflows/deploy.yml from main.
+#
+# No ports are published on purpose: prod puts Caddy in front and proxies to
+# notulen-newskin:8000 over a shared Docker network. Publishing 8000 would expose
+# the app (and its unauthenticated /admin) directly to the internet, bypassing TLS.
+# Attaching Caddy to this compose network (or declaring one here) is becik's call.
+services:
+  notulen-newskin:
+    image: ghcr.io/hadadkarsa/notulen-work-hdd-newskin:latest
+    container_name: notulen-newskin
+    restart: unless-stopped
+    environment:
+      PORT: "8000"
+      HOST: "0.0.0.0"
+      DB_PATH: /data/notulen.db
+      ADMIN_LOCK: "off"
+    volumes:
+      - newskin_app_data:/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 3s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  newskin_app_data:
+    # Named volume, deliberately not stack_app_data: that one holds v2's data.
