@@ -1,0 +1,11 @@
+node_modules
+dashboard/node_modules
+dist
+public/admin
+.git
+.github
+*.db
+.env
+.DS_Store
+test
+*.md
